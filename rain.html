@@ -1,0 +1,269 @@
+<!-- <!DOCTYPE html> -->
+<html>
+	<head lang="ko">
+		<title>산성비</title>
+
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+		
+		<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				var goal, keyword = [];
+
+				var keywordCnt = 0;
+				var score = 0;
+				var heart = 5;
+
+				$('#score').html("스코어 : " + score);
+				$('#heart').html(makeHeart(heart));
+
+				function makeHeart(cnt) {
+					var tmp = "목숨 : "
+					for (var i = 0; i < cnt; i++) {
+						tmp += "♥";
+					}
+					return tmp;
+				}
+
+				function removeNode(element) {
+					var child = document.getElementById(element);
+					if (child !== undefined) {
+						var parent = child.parentNode;
+						parent.removeChild(child);
+						child = null;
+					}
+				}
+
+				function gameWin() {
+					clearInterval(interval1);
+					clearInterval(interval2);
+
+					if (stage == -1) {
+						alert("사용자 지정 스테이지 클리어!!! 축하합니다!!!");
+					} else if (stage >= stageCnt) {
+						alert("모든 스테이지를 클리어했습니다!!! 축하합니다!!!");
+					} else {
+						alert(`스테이지 ${stage} 클리어!!! 축하합니다!!!\n이어서 스테이지 ${++stage}가 실행됩니다.`);
+						$('#stage').val(stage);
+						gameStart();
+					}
+				}
+
+				function gameOver() {
+					clearInterval(interval1);
+					clearInterval(interval2);
+
+					alert("게임 오버 !!!");
+					location.reload();
+				}
+
+				function randomSpeed(maxSpeed) {
+					return parseInt(Math.random() * maxSpeed) + 1;
+				}
+
+				function randomLeft() {
+					return parseInt(Math.random() * $('.jumbotron').width() + $('.jumbotron').position().left) - 9;
+				}
+
+				function KeywordRain() {
+					this.y = $('#canvas').position().top;
+					this.speed = randomSpeed(2);
+
+					this.node = document.createElement('h5');
+					this.node.id = keyword[keywordCnt];
+					this.node.innerHTML = keyword[keywordCnt++];
+
+					if (keywordCnt >= keyword.length) {
+						clearInterval(interval1);
+					}
+
+					this.node.className = "btn btn-lg btn-primary";
+					this.node.style.position = 'absolute';
+					this.node.style.left = randomLeft();
+
+					document.getElementById('canvas').appendChild(this.node);
+					KeywordRain.prototype.move = function() {
+						if (this.y >= ($('.jumbotron').position().top + $('.jumbotron').height())) { // 땅에 닿으면
+							$(this.node).remove();
+							this.y = 0;
+							this.speed = 0;
+
+							keyword.splice(keyword.indexOf(this.node.id), 1);
+							keywordCnt--;
+							heart--;
+
+							$('#heart').html(makeHeart(heart));
+							if (heart < 1) {
+								gameOver();
+							}
+						} else {
+							this.y += this.speed;
+							this.node.style.top = this.y + 'px';
+						}
+					}
+				}
+
+				function check() {
+					var text = $('#text');
+
+					if (keyword.indexOf(text.val()) != -1) {
+						removeNode(text.val());
+
+						for (var i in game) {
+							if (game[i].node.id == text.val()) {
+								game[i].y = 0;
+								game[i].speed = 0;
+							}
+						}
+
+						keyword.splice(keyword.indexOf(text.val()), 1);
+						keywordCnt--;
+						score++;
+						$('#score').html("스코어 : " + score);
+					}
+
+					text.val(null);
+					if (score >= goal) {
+						gameWin();
+					}
+				}
+
+				function gameStart() {
+					// 초기화
+					clearInterval(interval1);
+					clearInterval(interval2);
+
+					for (var i in game) {
+						game[i].node.remove();
+					}
+
+					game = [];
+					keywordCnt = 0;
+					score = 0;
+					heart = 5;
+
+					$('#score').html("스코어 : " + score);
+					$('#heart').html(makeHeart(heart));
+					// -----
+
+					switch (stage) {
+					case 1:
+						keyword = ['apple', 'banana', 'kiwi', 'tomato', 'coconut', 'mango'];
+						goal = 5;
+						break;
+					case 2:
+						keyword = ['사과', '바나나', '키위', '토마토', '코코넛', '망고'];
+						goal = 5;
+						break;
+					case 3:
+						keyword = ['apple', 'banana', 'kiwi', 'tomato', 'coconut', 'mango', '사과', '바나나', '키위', '토마토', '코코넛', '망고'];
+						goal = 7;
+						break;
+					case 4:
+						keyword = ['yang', 'tae', 'kwan', 'dit', 'pusan', '19', 'smart', 'english'];
+						goal = 5;
+						break;
+					default:
+					}
+
+					interval1 = setInterval(function() {
+						game.push(new KeywordRain());
+					}, 1000);
+
+					interval2 = setInterval(function() {
+						for (var i in game) {
+							game[i].move();
+						}
+					}, 15);
+				}
+
+				var game = [];
+				var stage;
+				var stageCnt = 4;
+				var interval1;
+				var interval2;
+
+				// 이벤트 등록
+				$('#text').keypress(function(e) {
+					if (e.which == 13) {
+						check();
+					}
+				});
+				$('#check').click(check);
+				$('#startGame').click(function() {
+					if ($('#stage').val() === "스테이지 만들기 ...") { // 사용자 지정 스테이지 예외처리
+						stage = -1;
+
+						var keyw = prompt("출력할 단어 리스트를 입력해주세요.", "a,b,c,d,e,f");
+
+						if (keyw !== null) {
+							keyword = keyw.trim().split(',');
+							goal = prompt("목표 스코어를 입력해주세요.", "5");
+
+							if (goal !== null) {
+								gameStart();
+							}
+						}
+						return;
+					}
+
+					stage = parseInt($('#stage').val());
+					if (isNaN(stage)) {
+						return;
+					} else {
+						gameStart();
+					}
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<nav>
+					<ul class="nav nav-pills pull-right">
+						<li role="presentation" class="active"><a href="#">홈</a></li>
+						<li role="presentation"><a href="javascript:alert('Tae-Kwan, Yang');">제작자</a></li>
+					</ul>
+				</nav>
+
+				<h2 class="text-muted">산성비</h2>
+				<br>
+
+				<div class="row">
+					<div class="col-xs-3">
+						<select id="stage" class="form-control">
+							<option>Level 선택 ...</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+							<option>4</option>
+							<option>스테이지 만들기 ...</option>
+						</select>
+					</div>
+					<div class="col-xs-6">
+						<button id="startGame" class="btn btn-success">게임 시작</button>
+					</div>
+				</div>
+			</div>
+
+			<br>
+			<div id="canvas" class="jumbotron" style="height: 500px;"></div>
+			
+			<hr>
+			<input id="text" placeholder="text" class="form-control">
+			<h5>
+				<button id="check" class="btn btn-primary btn-block">
+					<h5>확인</h5>
+				</button>
+			</h5>
+
+			<hr>
+			<h2>
+				<span id="score" class="label label-success"></span>
+				<span id="heart" class="label label-danger"></span>
+			</h2>
+		</div> <!-- container -->
+	</body>
+</html>
