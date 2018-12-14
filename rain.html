@@ -35,9 +35,25 @@
 					}
 				}
 
-				function gameWin() {
+				function gameClear() {
 					clearInterval(interval1);
 					clearInterval(interval2);
+
+					for (var i in game) {
+						game[i].node.remove();
+					}
+
+					game = [];
+					keywordCnt = 0;
+					score = 0;
+					heart = 5;
+
+					$('#score').html("스코어 : " + score);
+					$('#heart').html(makeHeart(heart));
+				}
+
+				function gameWin() {
+					gameClear();
 
 					if (stage == -1) {
 						alert("사용자 지정 스테이지 클리어!!! 축하합니다!!!");
@@ -51,11 +67,8 @@
 				}
 
 				function gameOver() {
-					clearInterval(interval1);
-					clearInterval(interval2);
-
 					alert("게임 오버 !!!");
-					location.reload();
+					gameClear();
 				}
 
 				function randomSpeed(maxSpeed) {
@@ -130,22 +143,7 @@
 				}
 
 				function gameStart() {
-					// 초기화
-					clearInterval(interval1);
-					clearInterval(interval2);
-
-					for (var i in game) {
-						game[i].node.remove();
-					}
-
-					game = [];
-					keywordCnt = 0;
-					score = 0;
-					heart = 5;
-
-					$('#score').html("스코어 : " + score);
-					$('#heart').html(makeHeart(heart));
-					// -----
+					gameClear();
 
 					switch (stage) {
 					case 1:
